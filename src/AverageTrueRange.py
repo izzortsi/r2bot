@@ -62,21 +62,24 @@ class AverageTrueRange:
             ]
         )
 
-    def compute_average_true_range(self, period) -> None:
+    def compute_average_true_range(self, smoothing_period: int = 14) -> None:
         """
         Calculate the average true range.
 
         Parameters
         ----------
-        period : int
-            Period of time to do computations, e.g., 14 days.
+        smoothing_period : int, default=14
+            Smoothing period.
         """
         self._compute_true_range()
         self.average_true_range = np.empty(self.high.shape)
-        self.average_true_range[: period - 1] = np.NaN
-        self.average_true_range[period - 1] = np.average(self.true_range[:period])
+        self.average_true_range[: smoothing_period - 1] = np.NaN
+        self.average_true_range[smoothing_period - 1] = np.average(
+            self.true_range[:smoothing_period]
+        )
         # TODO: replace for loop with something more efficient from numpy
-        for i in range(period, len(self.average_true_range)):
+        for i in range(smoothing_period, len(self.average_true_range)):
             self.average_true_range[i] = (
-                self.average_true_range[i - 1] * (period - 1) + self.true_range[i]
-            ) / period
+                self.average_true_range[i - 1] * (smoothing_period - 1)
+                + self.true_range[i]
+            ) / smoothing_period
