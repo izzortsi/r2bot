@@ -1,8 +1,23 @@
+"""Calculate the Average True Range."""
 import numpy as np
 
 
 class AverageTrueRange:
-    def __init__(self, high, low, close):
+    """Implementation of the Average True Range method."""
+
+    def __init__(self, high: np.array, low: np.array, close: np.array) -> None:
+        """
+        Initialize an AverageTrueRange object.
+
+        Parameters
+        ----------
+        high : np.array
+            High for each interval of the period.
+        low : np.array
+            Low for each interval of the period.
+        close : np.array
+            Close price for each interval of the period.
+        """
         self.high = high
         self.low = low
         self.close = close
@@ -12,27 +27,31 @@ class AverageTrueRange:
         self.true_range = None
         self.average_true_range = None
 
-    def compute_high_minus_low(self) -> None:
+    def _compute_high_minus_low(self) -> None:
+        """Calculate the high - low column."""
         self.high_minus_low = self.high - self.low
 
-    def compute_high_minus_previous_close(self) -> None:
+    def _compute_high_minus_previous_close(self) -> None:
+        """Calculate the high - previous close column."""
         self.high_minus_previous_close = np.empty(self.high.shape)
         self.high_minus_previous_close[0] = np.NaN
         self.high_minus_previous_close[1:] = np.absolute(
             self.high[1:] - self.close[0 : len(self.close) - 1]
         )
 
-    def compute_low_minus_previous_close(self) -> None:
+    def _compute_low_minus_previous_close(self) -> None:
+        """Calculate the low - previous close column."""
         self.low_minus_previous_close = np.empty(self.low.shape)
         self.low_minus_previous_close[0] = np.NaN
         self.low_minus_previous_close[1:] = np.absolute(
             self.low[1:] - self.close[0 : len(self.close) - 1]
         )
 
-    def compute_true_range(self) -> None:
-        self.compute_high_minus_low()
-        self.compute_high_minus_previous_close()
-        self.compute_low_minus_previous_close()
+    def _compute_true_range(self) -> None:
+        """Calculate the true range column."""
+        self._compute_high_minus_low()
+        self._compute_high_minus_previous_close()
+        self._compute_low_minus_previous_close()
         self.true_range = np.empty(self.high_minus_low.shape)
         self.true_range[0] = self.high_minus_low[0]
         self.true_range[1:] = np.maximum.reduce(
@@ -44,7 +63,15 @@ class AverageTrueRange:
         )
 
     def compute_average_true_range(self, period) -> None:
-        self.compute_true_range()
+        """
+        Calculate the average true range.
+
+        Parameters
+        ----------
+        period : int
+            Period of time to do computations, e.g., 14 days.
+        """
+        self._compute_true_range()
         self.average_true_range = np.empty(self.high.shape)
         self.average_true_range[: period - 1] = np.NaN
         self.average_true_range[period - 1] = np.average(self.true_range[:period])

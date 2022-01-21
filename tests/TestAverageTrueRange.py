@@ -143,7 +143,7 @@ class TestAverageTrueRange(unittest.TestCase):
             ]
         )
         average_true_range = AverageTrueRange(self.high, self.low, self.close)
-        average_true_range.compute_high_minus_low()
+        average_true_range._compute_high_minus_low()
         result = average_true_range.high_minus_low
         np.testing.assert_array_almost_equal(ground_truth, result)
 
@@ -183,7 +183,7 @@ class TestAverageTrueRange(unittest.TestCase):
             ]
         )
         average_true_range = AverageTrueRange(self.high, self.low, self.close)
-        average_true_range.compute_high_minus_previous_close()
+        average_true_range._compute_high_minus_previous_close()
         result = average_true_range.high_minus_previous_close
         np.testing.assert_array_almost_equal(ground_truth, result)
 
@@ -223,7 +223,7 @@ class TestAverageTrueRange(unittest.TestCase):
             ]
         )
         average_true_range = AverageTrueRange(self.high, self.low, self.close)
-        average_true_range.compute_low_minus_previous_close()
+        average_true_range._compute_low_minus_previous_close()
         result = average_true_range.low_minus_previous_close
         np.testing.assert_array_almost_equal(ground_truth, result)
 
@@ -261,7 +261,7 @@ class TestAverageTrueRange(unittest.TestCase):
             1.06,
         ]
         average_true_range = AverageTrueRange(self.high, self.low, self.close)
-        average_true_range.compute_true_range()
+        average_true_range._compute_true_range()
         result = average_true_range.true_range
         np.testing.assert_array_almost_equal(ground_truth, result)
 
