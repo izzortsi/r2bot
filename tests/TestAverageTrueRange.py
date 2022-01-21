@@ -299,8 +299,8 @@ class TestAverageTrueRange(unittest.TestCase):
             1.3165,
         ]
         average_true_range = AverageTrueRange(self.high, self.low, self.close)
-        period = 14
-        average_true_range.compute_average_true_range(period)
+        smoothing_period = 14
+        average_true_range.compute_average_true_range(smoothing_period)
         result = average_true_range.average_true_range
         decimal = 3
         np.testing.assert_array_almost_equal(ground_truth, result, decimal)

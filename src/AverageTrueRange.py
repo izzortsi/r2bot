@@ -12,9 +12,9 @@ class AverageTrueRange:
         Parameters
         ----------
         high : np.array
-            High for each interval of the period.
+            Highest price for each interval of the period.
         low : np.array
-            Low for each interval of the period.
+            Lowest price for each interval of the period.
         close : np.array
             Close price for each interval of the period.
         """
