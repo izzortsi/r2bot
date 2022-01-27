@@ -106,6 +106,7 @@ class TestAverageTrueRange(unittest.TestCase):
             47.85,
         ]
     )
+    smoothing_period = 14
 
     def test_compute_high_minus_low(self):
         ground_truth = np.array(
@@ -298,9 +299,9 @@ class TestAverageTrueRange(unittest.TestCase):
             1.3362,
             1.3165,
         ]
-        average_true_range = AverageTrueRange(self.high, self.low, self.close)
-        smoothing_period = 14
-        average_true_range.compute_average_true_range(smoothing_period)
-        result = average_true_range.average_true_range
+        average_true_range = AverageTrueRange(
+            self.high, self.low, self.close, self.smoothing_period
+        )
+        result = average_true_range.compute_average_true_range()
         decimal = 3
         np.testing.assert_array_almost_equal(ground_truth, result, decimal)

@@ -5,22 +5,31 @@ import numpy as np
 class AverageTrueRange:
     """Implementation of the Average True Range method."""
 
-    def __init__(self, high: np.array, low: np.array, close: np.array) -> None:
+    def __init__(
+        self,
+        highest_prices: np.array,
+        lowest_prices: np.array,
+        closing_prices: np.array,
+        smoothing_period: int = 14,
+    ) -> None:
         """
         Initialize an AverageTrueRange object.
 
         Parameters
         ----------
-        high : np.array
+        highest_prices : np.array
             Highest price for each interval of the period.
-        low : np.array
+        lowest_prices : np.array
             Lowest price for each interval of the period.
-        close : np.array
-            Close price for each interval of the period.
+        closing_prices : np.array
+            Closing price for each interval of the period.
+        smoothing_period : int, default=14
+            Smoothing period.
         """
-        self.high = high
-        self.low = low
-        self.close = close
+        self.highest_prices = highest_prices
+        self.lowest_prices = lowest_prices
+        self.closing_prices = closing_prices
+        self.smoothing_period = smoothing_period
         self.high_minus_low = None
         self.high_minus_previous_close = None
         self.low_minus_previous_close = None
@@ -29,22 +38,24 @@ class AverageTrueRange:
 
     def _compute_high_minus_low(self) -> None:
         """Calculate the high - low column."""
-        self.high_minus_low = self.high - self.low
+        self.high_minus_low = self.highest_prices - self.lowest_prices
 
     def _compute_high_minus_previous_close(self) -> None:
         """Calculate the high - previous close column."""
-        self.high_minus_previous_close = np.empty(self.high.shape)
+        self.high_minus_previous_close = np.empty(self.highest_prices.shape)
         self.high_minus_previous_close[0] = np.NaN
         self.high_minus_previous_close[1:] = np.absolute(
-            self.high[1:] - self.close[0 : len(self.close) - 1]
+            self.highest_prices[1:]
+            - self.closing_prices[0 : len(self.closing_prices) - 1]
         )
 
     def _compute_low_minus_previous_close(self) -> None:
         """Calculate the low - previous close column."""
-        self.low_minus_previous_close = np.empty(self.low.shape)
+        self.low_minus_previous_close = np.empty(self.lowest_prices.shape)
         self.low_minus_previous_close[0] = np.NaN
         self.low_minus_previous_close[1:] = np.absolute(
-            self.low[1:] - self.close[0 : len(self.close) - 1]
+            self.lowest_prices[1:]
+            - self.closing_prices[0 : len(self.closing_prices) - 1]
         )
 
     def _compute_true_range(self) -> None:
@@ -62,24 +73,24 @@ class AverageTrueRange:
             ]
         )
 
-    def compute_average_true_range(self, smoothing_period: int = 14) -> None:
+    def compute_average_true_range(self) -> float:
         """
         Calculate the average true range.
 
-        Parameters
+        Returns
         ----------
-        smoothing_period : int, default=14
-            Smoothing period.
+        average_true_range : float
+            The average true range.
         """
         self._compute_true_range()
-        self.average_true_range = np.empty(self.high.shape)
-        self.average_true_range[: smoothing_period - 1] = np.NaN
-        self.average_true_range[smoothing_period - 1] = np.average(
-            self.true_range[:smoothing_period]
+        self.average_true_range = np.empty(self.highest_prices.shape)
+        self.average_true_range[: self.smoothing_period - 1] = np.NaN
+        self.average_true_range[self.smoothing_period - 1] = np.average(
+            self.true_range[: self.smoothing_period]
         )
-        # TODO: replace for loop with something more efficient from numpy
-        for i in range(smoothing_period, len(self.average_true_range)):
+        for i in range(self.smoothing_period, len(self.average_true_range)):
             self.average_true_range[i] = (
-                self.average_true_range[i - 1] * (smoothing_period - 1)
+                self.average_true_range[i - 1] * (self.smoothing_period - 1)
                 + self.true_range[i]
-            ) / smoothing_period
+            ) / self.smoothing_period
+        return self.average_true_range
