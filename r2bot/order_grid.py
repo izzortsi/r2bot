@@ -86,7 +86,7 @@ def send_order_grid(client, symbol, inf_grid, sup_grid, tp, side, coefs, qty=1.1
     formatted_order_size = qty_formatter(order_size, qty_precision)
     
     try:
-        new_position = client.futures_create_order(
+        new_position = client.new_order(
             symbol=symbol,
             side=side,
             type="MARKET",
@@ -99,14 +99,15 @@ def send_order_grid(client, symbol, inf_grid, sup_grid, tp, side, coefs, qty=1.1
             
     except ClientError as error:
         
-        print("positioning, ", error)    
+        print("positioning, ", error)   
+        print(error.error_code)    
         if (
-            error.code == -2019
-            or error.code == -4164
+            error.error_code == -2019
+            or error.error_code == -4164
             ):
-            return error.code, None
+            return error.error_code, None
     else:
-        position = client.futures_position_information(symbol=symbol)
+        position = client.get_position_risk(symbol=symbol)
         entry_price = float(position[0]["entryPrice"])
         mark_price = float(position[0]["markPrice"])
         position_qty = abs(float(position[0]["positionAmt"]))
@@ -129,7 +130,7 @@ def send_order_grid(client, symbol, inf_grid, sup_grid, tp, side, coefs, qty=1.1
             formatted_order_size = qty_formatter(order_size*coefs[i]*qty**i, qty_precision)
             print(formatted_grid_entry_price)
             try:
-                grid_order = client.futures_create_order(
+                grid_order = client.new_order(
                 symbol=symbol,
                 side=side,
                 type="LIMIT",
@@ -147,10 +148,10 @@ def send_order_grid(client, symbol, inf_grid, sup_grid, tp, side, coefs, qty=1.1
                 print(f"grid order {i}, ", error)
 
                 if (
-                    error.code == -2019
-                    or error.code == -4164
+                    error.error_code == -2019
+                    or error.error_code == -4164
                     ):
-                    error_code = error.code
+                    error_code = error.error_code
         
         exit_price = round_step_size(
                         compute_exit(entry_price, tp, side=side), 
@@ -170,7 +171,7 @@ def send_order_grid(client, symbol, inf_grid, sup_grid, tp, side, coefs, qty=1.1
                 """
         )
         try:
-            tp_order_mkt = client.futures_create_order(
+            tp_order_mkt = client.new_order(
                 symbol=symbol,
                 side=counterside,
                 type="TAKE_PROFIT_MARKET",
@@ -195,7 +196,7 @@ def send_order_grid(client, symbol, inf_grid, sup_grid, tp, side, coefs, qty=1.1
                 )
                 # print(formatted_sl_price)
                 try:
-                    sl_order_mkt = client.futures_create_order(
+                    sl_order_mkt = client.new_order(
                         symbol=symbol,
                         side=counterside,
                         type="STOP_MARKET",
@@ -227,7 +228,7 @@ def send_tpsl(client, symbol, tp, sl, side, protect=False):
     filters = get_filters()
     symbolFilters = filters[symbol]
     
-    position = client.futures_position_information(symbol=symbol)
+    position = client.get_position_risk(symbol=symbol)
 
     entry_price = float(position[0]["entryPrice"])
     mark_price = float(position[0]["markPrice"])
@@ -254,7 +255,7 @@ def send_tpsl(client, symbol, tp, sl, side, protect=False):
             """
     )
     try:
-        tp_order_mkt = client.futures_create_order(
+        tp_order_mkt = client.new_order(
             symbol=symbol,
             side=counterside,
             type="TAKE_PROFIT_MARKET",
@@ -277,7 +278,7 @@ def send_tpsl(client, symbol, tp, sl, side, protect=False):
             )
             print(formatted_sl_price)
             try:
-                sl_order_mkt = client.futures_create_order(
+                sl_order_mkt = client.new_order(
                     symbol=symbol,
                     side=counterside,
                     type="STOP_MARKET",

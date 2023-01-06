@@ -4,8 +4,8 @@ from plot_functions import *
 from ring_buffer import RingBuffer
 from change_leverage_and_margin_type import change_leverage_and_margin
 # from order_grid_arithmetic import send_arithmetic_order_grid
-from binance.client import Client
-from binance.enums import *
+from binance.um_futures import UMFutures as Client
+from binance.api import ClientError
 from threading import Thread, local
 from datetime import datetime
 
@@ -30,11 +30,12 @@ parser.add_argument("-ppl", "--price_posision_low", type=float, default=0.0)
 parser.add_argument("-pph", "--price_position_high", type=float, default=0.0)
 
 parser.add_argument("-wl", "--window_length", type=int, default=52)
-parser.add_argument("-wa", "--atr_window_length", type=int, default=8)
+parser.add_argument("-wa", "--atr_window_length", type=int, default=7)
 parser.add_argument("-e", nargs="+", help="my help message", type=float,
+                        default=(1.0, 1.364, 1.618) )
                         # default=(1.0, 1.146, 1.364, 1.5, 1.618, 1.854, 2.0, 2.146, 2.364)) #1h
                         # default=(1.0, 1.146, 1.364, 1.5, 1.618, 1.854, 2.0, 2.364, 2.5, 2.618)) #15min
-                        default=(0.92, 1.16, 1.4, 1.64, 1.88, 2.12, 2.36, 2.6, 2.84)) # 15m (maybe 5min)
+                        # default=(0.92, 1.16, 1.4, 1.64, 1.88, 2.12, 2.36, 2.6, 2.84)) # 15m (maybe 5min)
                         # default=(0.86, 1.0, 1.146, 1.292, 1.364, 1.5, 1.618, 1.792, 1.854, 2.0)) # 1h (maybe 5min)
 parser.add_argument("--max_positions", type=int, default=3)
 parser.add_argument("--debug", type=bool, default=False)
@@ -51,7 +52,7 @@ parser.add_argument("--run_only_on", nargs="+", help="my help message", type=str
 parser.add_argument("-tp", "--take_profit", type=float, default=0.14)                
 parser.add_argument("-sl", "--stop_loss", type=float, default=0.12)                
 parser.add_argument("-q", "--quantity", type=float, default=1.1)
-parser.add_argument("-lev", "--leverage", type=int, default=17)                
+parser.add_argument("-lev", "--leverage", type=int, default=10)                
 
 
 args = parser.parse_args()
@@ -252,7 +253,7 @@ def generate_market_signals(symbols, coefs, interval, limit=99, paper=False, pos
             continue
         if len(run_only_on) > 0 and symbol not in run_only_on:
             continue
-        klines = client.futures_klines(symbol=symbol, interval=interval, limit=limit)
+        klines = client.continuous_klines(symbol, "PERPETUAL", interval=interval, limit=limit)
         klines = process_futures_klines(klines)
         data_window = klines.tail(window_length)
         data_window.index = range(len(data_window))
@@ -387,7 +388,7 @@ def generate_market_signals(symbols, coefs, interval, limit=99, paper=False, pos
     return signals, df, data, positions, cpnl, shown_data, order_grids
 
 def prescreen():
-    all_stats = client.futures_ticker()
+    all_stats = client.ticker_24hr_price_change()
     perps = process_all_stats(all_stats)
     filtered_perps = filter_perps(perps, price_position_range=price_position_range)
     filtered_perps = pd.concat(filtered_perps, axis=0)
@@ -402,7 +403,7 @@ def postscreen(filtered_perps, paper=False, positions={}, cpnl={}, update_positi
 #     return signals, rows, data, positions, cpnl, shown_data, order_grids
 
 def screen():
-    all_stats = client.futures_ticker()
+    all_stats = client.ticker_24hr_price_change()
     perps = process_all_stats(all_stats)
     filtered_perps = filter_perps(perps, price_position_range=price_position_range)
     filtered_perps = pd.concat(filtered_perps, axis=0)
@@ -470,7 +471,7 @@ def check_positions(client, spairs, positions, order_grids):
         
             try:
                 client.futures_cancel_all_open_orders(symbol=symbol)
-            except BinanceAPIException as e:
+            except ClientError as e:
                 print(e)
             else:                
                 spairs.remove(symbol)
@@ -486,8 +487,8 @@ def check_positions(client, spairs, positions, order_grids):
             try:
                 client.futures_cancel_order(symbol=symbol, orderId=tp_id)
                 # client.futures_cancel_order(symbol=symbol, orderId=sl_id)
-            except BinanceAPIException as e:
-                print(e)
+            except ClientError as e:
+                print(e, "client error")
                 if e.code == -2011:
                     new_tp, new_sl = send_tpsl(client, symbol, tp, None, side, protect=False)
                 elif e.code == -2021: #APIError(code=-2021): Order would immediately trigger.
