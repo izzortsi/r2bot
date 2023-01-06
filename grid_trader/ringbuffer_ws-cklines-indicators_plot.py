@@ -122,3 +122,68 @@ ax.clear()
 # ax.lines[2].draw(ax.plot(b.df.date,b.indicators.iband))
 # ax.lines[3].draw(ax.plot(b.df.date,b.indicators.sband))
 #%%
+# %matplotlib qt
+# import numpy as np
+# import matplotlib.pyplot as plt
+# from matplotlib.animation import FuncAnimation
+
+# fig, ax = plt.subplots()
+# xdata, ydata = [], []
+# ln, = plt.plot([], [], 'ro')
+
+# def init():
+#     ax.set_xlim(0, 2*np.pi)
+#     ax.set_ylim(-1, 1)
+#     return ln,
+
+# def update(frame):
+#     xdata.append(frame.index[-1])
+#     ydata.append(frame.c.iloc[-1])
+#     ln.set_data(xdata, ydata)
+#     return ln,
+
+# ani = FuncAnimation(fig, update, frames=b.df,
+#                     init_func=init, blit=True)
+# plt.show()
+# %%
+%matplotlib qt
+import matplotlib.pyplot as plt
+from drawnow import drawnow
+from time import sleep
+
+def make_fig():
+    plt.plot(b.df.date, b.df.c)  # I think you meant this
+    plt.plot(b.df.date, b.df.h)  # I think you meant this
+    plt.plot(b.df.date, b.df.l)  # I think you meant this
+
+plt.ion()  # enable interactivity
+fig = plt.figure()  # make a figure
+
+x = list()
+y_1 = list()
+y_2 = list()
+y_3 = list()
+i = 0 
+while b.is_alive():
+    if not (len(b.indicators) == b.size):
+        sleep(0.5)
+        x.append(b.df.date.iloc[-1])
+        y_1.append(b.df.c.iloc[-1])  # or any arbitrary update to your figure's data
+        y_2.append(b.df.h.iloc[-1])  # or any arbitrary update to your figure's data
+        y_3.append(b.df.l.iloc[-1])  # or any arbitrary update to your figure's data
+        i += 1
+        drawnow(make_fig)
+    elif len(b.indicators) == b.size:
+        def make_fig():
+            plt.plot(b.df.date, b.df.c)  # I think you meant this
+            plt.plot(b.df.date, b.indicators.iband)  # I think you meant this
+            plt.plot(b.df.date, b.indicators.sband)  # I think you meant this        
+        sleep(0.5)
+        x.append(b.df.date.iloc[-1])
+        y_1.append(b.df.c.iloc[-1])  # or any arbitrary update to your figure's data
+        y_2.append(b.indicators.iband[-1])  # or any arbitrary update to your figure's data
+        y_3.append(b.indicators.sband[-1])  # or any arbitrary update to your figure's data
+        i += 1
+        drawnow(make_fig)
+
+# %%
