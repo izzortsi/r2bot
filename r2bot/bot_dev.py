@@ -26,13 +26,13 @@ runs = 0
 parser = argparse.ArgumentParser()
 parser.add_argument("-pt", "--paper_trade", type=bool, default=True)
 parser.add_argument("-tf", "--timeframe", type=str, default="1h")
-parser.add_argument("-ppl", "--price_posision_low", type=float, default=0.0)
-parser.add_argument("-pph", "--price_position_high", type=float, default=0.0)
+parser.add_argument("-ppl", "--price_posision_low", type=float, default=0.5)
+parser.add_argument("-pph", "--price_position_high", type=float, default=0.5)
 
 parser.add_argument("-wl", "--window_length", type=int, default=52)
 parser.add_argument("-wa", "--atr_window_length", type=int, default=7)
 parser.add_argument("-e", nargs="+", help="my help message", type=float,
-                        default=(1.0, 1.364, 1.618) )
+                        default=(1.0, 1.618) )
                         # default=(1.0, 1.146, 1.364, 1.5, 1.618, 1.854, 2.0, 2.146, 2.364)) #1h
                         # default=(1.0, 1.146, 1.364, 1.5, 1.618, 1.854, 2.0, 2.364, 2.5, 2.618)) #15min
                         # default=(0.92, 1.16, 1.4, 1.64, 1.88, 2.12, 2.36, 2.6, 2.84)) # 15m (maybe 5min)
@@ -457,7 +457,7 @@ def check_positions(client, spairs, positions, order_grids):
 
         is_closed = False
         symbol_grid = order_grids[symbol]
-        position = client.futures_position_information(symbol=symbol)
+        position = client.get_position_risk(symbol=symbol)
         positions[symbol] = position[0]
         entry_price = float(position[0]["entryPrice"])
         position_qty = float(position[0]["positionAmt"])
@@ -470,7 +470,7 @@ def check_positions(client, spairs, positions, order_grids):
             is_closed = True
         
             try:
-                client.futures_cancel_all_open_orders(symbol=symbol)
+                client.cancel_all_open_orders(symbol=symbol)
             except ClientError as e:
                 print(e)
             else:                
@@ -485,13 +485,13 @@ def check_positions(client, spairs, positions, order_grids):
             tp_id = symbol_grid["tp"]["orderId"]
             # sl_id = symbol_grid["sl"]["orderId"]
             try:
-                client.futures_cancel_order(symbol=symbol, orderId=tp_id)
+                client.cancel_order(symbol=symbol, orderId=tp_id)
                 # client.futures_cancel_order(symbol=symbol, orderId=sl_id)
             except ClientError as e:
                 print(e, "client error")
-                if e.code == -2011:
+                if e.error_code == -2011:
                     new_tp, new_sl = send_tpsl(client, symbol, tp, None, side, protect=False)
-                elif e.code == -2021: #APIError(code=-2021): Order would immediately trigger.
+                elif e.error_code == -2021: #APIError(code=-2021): Order would immediately trigger.
                     pass
                     # new_tp, new_sl = send_tpsl(client, symbol, tp, sl, side, protect=False)
             else:

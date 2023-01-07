@@ -90,7 +90,7 @@ def plot_symboL_atr_grid(symbol, data):
         data[symbol]["close_ema"], 
         data[symbol]["hist"],
     )
-    fig.update_layout(title_text=f"{symbol}@{interval}")
+    fig.update_layout(title_text=f"{symbol}@INTERVAL")
     fig.show()
     # return fig
 

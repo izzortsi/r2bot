@@ -151,7 +151,7 @@ def check_positions(client, spairs, positions, order_grids):
 
         is_closed = False
         symbol_grid = order_grids[symbol]
-        position = client.futures_position_information(symbol=symbol)
+        position = client.get_position_risk(symbol=symbol)
         positions[symbol] = position[0]
         entry_price = float(position[0]["entryPrice"])
         position_qty = float(position[0]["positionAmt"])
@@ -164,7 +164,7 @@ def check_positions(client, spairs, positions, order_grids):
             is_closed = True
         
             try:
-                client.futures_cancel_all_open_orders(symbol=symbol)
+                client.cancel_all_open_orders(symbol=symbol)
             except ClientError as e:
                 print(e)
             else:                
@@ -179,13 +179,13 @@ def check_positions(client, spairs, positions, order_grids):
             tp_id = symbol_grid["tp"]["orderId"]
             # sl_id = symbol_grid["sl"]["orderId"]
             try:
-                client.futures_cancel_order(symbol=symbol, orderId=tp_id)
+                client.cancel_order(symbol=symbol, orderId=tp_id)
                 # client.futures_cancel_order(symbol=symbol, orderId=sl_id)
             except ClientError as e:
                 print(e)
-                if e.code == -2011:
+                if e.error_code == -2011:
                     new_tp, new_sl = send_tpsl(client, symbol, tp, None, side, protect=False)
-                elif e.code == -2021: #APIError(code=-2021): Order would immediately trigger.
+                elif e.error_code == -2021: #APIError(code=-2021): Order would immediately trigger.
                     pass
                     # new_tp, new_sl = send_tpsl(client, symbol, tp, sl, side, protect=False)
             else:
@@ -324,7 +324,7 @@ def generate_market_signals(symbols, coefs, interval, limit=99, paper=False, pos
             continue
         if len(run_only_on) > 0 and symbol not in run_only_on:
             continue
-        klines = client.futures_klines(symbol=symbol, interval=interval, limit=limit)
+        klines = client.continuous_klines(symbol, "PERPETUAL", interval=interval, limit=limit)
         klines = process_futures_klines(klines)
         data_window = klines.tail(window_length)
         data_window.index = range(len(data_window))
@@ -459,7 +459,7 @@ def generate_market_signals(symbols, coefs, interval, limit=99, paper=False, pos
     return signals, df, data, positions, cpnl, shown_data, order_grids
 
 def prescreen():
-    all_stats = client.futures_ticker()
+    all_stats = client.ticker_24hr_price_change()
     perps = process_all_stats(all_stats)
     filtered_perps = filter_perps(perps, price_position_range=price_position_range)
     filtered_perps = pd.concat(filtered_perps, axis=0)
@@ -474,7 +474,7 @@ def postscreen(filtered_perps, paper=False, positions={}, cpnl={}, update_positi
 #     return signals, rows, data, positions, cpnl, shown_data, order_grids
 
 def screen():
-    all_stats = client.futures_ticker()
+    all_stats = client.ticker_24hr_price_change()
     perps = process_all_stats(all_stats)
     filtered_perps = filter_perps(perps, price_position_range=price_position_range)
     filtered_perps = pd.concat(filtered_perps, axis=0)

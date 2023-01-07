@@ -1,4 +1,3 @@
-
 # %%
 
 import json
@@ -11,7 +10,7 @@ import os
 api_key = os.environ.get("API_KEY")
 api_secret = os.environ.get("API_SECRET")
 client = Client(api_key, api_secret)
-ex_info = client.futures_exchange_info()
+ex_info = client.exchange_info()
 # %%
 with open("exchangeInfo.json", "w") as json_file:
     json.dump(ex_info, json_file, indent=4)
