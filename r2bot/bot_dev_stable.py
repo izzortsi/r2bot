@@ -52,7 +52,7 @@ parser.add_argument("--run_only_on", nargs="+", help="my help message", type=str
 parser.add_argument("-tp", "--take_profit", type=float, default=0.14)                
 parser.add_argument("-sl", "--stop_loss", type=float, default=0.12)                
 parser.add_argument("-q", "--quantity", type=float, default=1.1)
-parser.add_argument("-lev", "--leverage", type=int, default=17)                
+parser.add_argument("-lev", "--leverage", type=int, default=10)                
 
 
 args = parser.parse_args()

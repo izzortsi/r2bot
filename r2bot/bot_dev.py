@@ -470,7 +470,7 @@ def check_positions(client, spairs, positions, order_grids):
             is_closed = True
         
             try:
-                client.cancel_all_open_orders(symbol=symbol)
+                client.cancel_open_orders(symbol=symbol)
             except ClientError as e:
                 print(e)
             else:                
